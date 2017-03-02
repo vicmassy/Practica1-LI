@@ -156,11 +156,11 @@ void backtrack(){
 // Heuristic for finding the next decision literal:
 int getNextDecisionLiteral() {
     ++decisions;
-    while (ranking.size() > 0 and model[ranking.top().first] != UNDEF) {
+    while (not ranking.empty() and model[ranking.top().first] != UNDEF) {
         insideQueue[ranking.top().first-1] = false;
         ranking.pop();
     }
-    if (ranking.size() > 0) {
+    if (not ranking.empty()) {
         int id = ranking.top().first;
         insideQueue[id-1] = false;
         ranking.pop();
