@@ -30,7 +30,7 @@ vector<int> model;
 vector<int> modelStack;
 vector<lit_in> mem;
 vector<double> scores;
-priority_queue<pair<int,int>, vector<pair<int,double> >, comp> ranking;
+priority_queue<pair<int,double>, vector<pair<int,double> >, comp> ranking;
 uint indexOfNextLitToPropagate;
 uint decisionLevel;
 uint decisions = 0;
@@ -134,6 +134,11 @@ void backtrack(){
         model[abs(lit)] = UNDEF;
         modelStack.pop_back();
         --i;
+        if (modelStack[i] != 0) ranking.push(make_pair(lit,scores[lit-1]));
+        else {
+            scores[lit-1] += 10;
+            ranking.push(make_pair(lit,scores[lit-1]));
+        }
     }
     // at this point, lit is the last decision
     modelStack.pop_back(); // remove the DL mark
@@ -146,7 +151,9 @@ void backtrack(){
 // Heuristic for finding the next decision literal:
 int getNextDecisionLiteral() {
     ++decisions;
-    //TODO: GOOD HEURISTIC 
+    while (ranking.size() > 0 and model[ranking.top().first] != UNDEF) ranking.pop();
+    if (ranking.size() > 0) return ranking.top().first;
+    return 0;
 }
 
 void checkmodel(){
