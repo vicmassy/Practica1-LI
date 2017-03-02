@@ -30,6 +30,7 @@ vector<int> model;
 vector<int> modelStack;
 vector<lit_in> mem;
 vector<double> scores;
+vector<bool> insideQueue;
 priority_queue<pair<int,double>, vector<pair<int,double> >, comp> ranking;
 uint indexOfNextLitToPropagate;
 uint decisionLevel;
@@ -51,6 +52,7 @@ void readClauses( ){
 
     mem.resize(numVars);
     scores.resize(numVars);
+    insideQueue.resize(numClauses,true);
     // Read clauses
     for (uint i = 0; i < numClauses; ++i) {
         int lit;
@@ -134,10 +136,13 @@ void backtrack(){
         model[abs(lit)] = UNDEF;
         modelStack.pop_back();
         --i;
-        if (modelStack[i] != 0) ranking.push(make_pair(lit,scores[lit-1]));
-        else {
-            scores[lit-1] += 10;
-            ranking.push(make_pair(lit,scores[lit-1]));
+        if (modelStack[i] != 0 and not insideQueue[abs(lit)-1]) {
+            ranking.push(make_pair(abs(lit),scores[abs(lit)-1]));
+            insideQueue[abs(lit)-1] = true;
+        }
+        else if (modelStack[i] == 0) {
+            scores[abs(lit)-1] += 100;
+            ranking.push(make_pair(abs(lit),scores[abs(lit)-1]));
         }
     }
     // at this point, lit is the last decision
@@ -151,8 +156,16 @@ void backtrack(){
 // Heuristic for finding the next decision literal:
 int getNextDecisionLiteral() {
     ++decisions;
-    while (ranking.size() > 0 and model[ranking.top().first] != UNDEF) ranking.pop();
-    if (ranking.size() > 0) return ranking.top().first;
+    while (ranking.size() > 0 and model[ranking.top().first] != UNDEF) {
+        insideQueue[ranking.top().first-1] = false;
+        ranking.pop();
+    }
+    if (ranking.size() > 0) {
+        int id = ranking.top().first;
+        insideQueue[id-1] = false;
+        ranking.pop();
+        return id;
+    }
     return 0;
 }
 
