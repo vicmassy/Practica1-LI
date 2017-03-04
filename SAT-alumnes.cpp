@@ -131,17 +131,20 @@ void backtrack(){
     ++btrack;
     uint i = modelStack.size() -1;
     int lit = 0;
+    int cont = 0;
     while (modelStack[i] != 0){ // 0 is the DL mark
         lit = modelStack[i];
         model[abs(lit)] = UNDEF;
         modelStack.pop_back();
+        ++cont;
         --i;
         if (modelStack[i] != 0 and not insideQueue[abs(lit)-1]) {
             ranking.push(make_pair(abs(lit),scores[abs(lit)-1]));
             insideQueue[abs(lit)-1] = true;
         }
         else if (modelStack[i] == 0) {
-            scores[abs(lit)-1] += 100;
+            scores[abs(lit)-1] += 100+1.15*cont;
+            insideQueue[abs(lit)-1] = true;
             ranking.push(make_pair(abs(lit),scores[abs(lit)-1]));
         }
     }
