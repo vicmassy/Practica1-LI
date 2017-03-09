@@ -30,6 +30,7 @@ vector<int> model;
 vector<int> modelStack;
 vector<lit_in> mem;
 vector<double> scores;
+vector<int> colision;
 vector<bool> insideQueue;
 priority_queue<pair<int,double>, vector<pair<int,double> >, comp> ranking;
 uint indexOfNextLitToPropagate;
@@ -52,6 +53,7 @@ void readClauses( ){
 
     mem.resize(numVars);
     scores.resize(numVars);
+    colision.resize(numVars,0);
     insideQueue.resize(numClauses,true);
     // Read clauses
     for (uint i = 0; i < numClauses; ++i) {
@@ -136,14 +138,14 @@ void backtrack(){
         lit = modelStack[i];
         model[abs(lit)] = UNDEF;
         modelStack.pop_back();
-        ++cont;
         --i;
         if (modelStack[i] != 0 and not insideQueue[abs(lit)-1]) {
             ranking.push(make_pair(abs(lit),scores[abs(lit)-1]));
             insideQueue[abs(lit)-1] = true;
         }
         else if (modelStack[i] == 0) {
-            scores[abs(lit)-1] += 100+1.15*cont;
+            ++colision[abs(lit)-1];
+            scores[abs(lit)-1] += 1.50*colision[abs(lit)-1];
             insideQueue[abs(lit)-1] = true;
             ranking.push(make_pair(abs(lit),scores[abs(lit)-1]));
         }
