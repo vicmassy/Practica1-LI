@@ -18,7 +18,7 @@ struct lit_in {
 };
 
 struct comp {
-    bool operator() (const pair<int,int> p1, const pair<int,int> p2) {
+    bool operator() (const pair<int,double> p1, const pair<int,double> p2) {
         return p1.second <= p2.second;
     }
 };
@@ -37,6 +37,7 @@ uint indexOfNextLitToPropagate;
 uint decisionLevel;
 uint decisions = 0;
 uint btrack = 0;
+int lastDec;
 
 
 void readClauses( ){
@@ -67,7 +68,7 @@ void readClauses( ){
             else {
                 mem[abs(lit)-1].positive.push_back(i);
             }
-            ++scores[abs(lit)-1];
+            scores[abs(lit)-1] += 0.2;
         }
     }
     for(int i = 0; i < numVars; ++i) ranking.push(make_pair(i+1,scores[i]));
@@ -133,22 +134,17 @@ void backtrack(){
     ++btrack;
     uint i = modelStack.size() -1;
     int lit = 0;
-    int cont = 0;
+    ++colision[lastDec-1];
+    scores[lastDec-1] += 1.15*colision[lastDec-1];
     while (modelStack[i] != 0){ // 0 is the DL mark
         lit = modelStack[i];
         model[abs(lit)] = UNDEF;
+        if (not insideQueue[abs(lit)-1]) {
+            ranking.push(make_pair(abs(lit),scores[abs(lit)-1]));
+            insideQueue[abs(lit)-1] = true;
+        }
         modelStack.pop_back();
         --i;
-        if (modelStack[i] != 0 and not insideQueue[abs(lit)-1]) {
-            ranking.push(make_pair(abs(lit),scores[abs(lit)-1]));
-            insideQueue[abs(lit)-1] = true;
-        }
-        else if (modelStack[i] == 0) {
-            ++colision[abs(lit)-1];
-            scores[abs(lit)-1] += 1.50*colision[abs(lit)-1];
-            insideQueue[abs(lit)-1] = true;
-            ranking.push(make_pair(abs(lit),scores[abs(lit)-1]));
-        }
     }
     // at this point, lit is the last decision
     modelStack.pop_back(); // remove the DL mark
@@ -169,6 +165,7 @@ int getNextDecisionLiteral() {
         int id = ranking.top().first;
         insideQueue[id-1] = false;
         ranking.pop();
+        lastDec = id;
         return id;
     }
     return 0;
