@@ -4,9 +4,11 @@
 #include <vector>
 #include <cstdio>
 #include <cmath>
+#include <chrono>
 #include <queue>
 
 using namespace std;
+using namespace std::chrono;
 
 #define UNDEF -1
 #define TRUE 1
@@ -37,6 +39,7 @@ uint indexOfNextLitToPropagate;
 uint decisionLevel;
 uint decisions = 0;
 uint btrack = 0;
+uint propagation = 0;
 int lastDec;
 
 
@@ -125,6 +128,7 @@ bool propagateGivesConflict ( ) {
                 else if (not someLitTrue and numUndefs == 1) setLiteralToTrue(lastLitUndef);
             }
         }
+        ++propagation;
     }
     return false;
 }
@@ -187,9 +191,7 @@ void checkmodel(){
 
 int main(int argc, char *argv[]){
 
-    if(argc > 1) freopen(argv[1],"r",stdin);
-    else exit(0);
-
+    high_resolution_clock::time_point t1 = high_resolution_clock::now();
     readClauses(); // reads numVars, numClauses and clauses
     model.resize(numVars+1,UNDEF);
     indexOfNextLitToPropagate = 0;
@@ -201,7 +203,11 @@ int main(int argc, char *argv[]){
         int lit = clauses[i][0];
         int val = currentValueInModel(lit);
         if (val == FALSE) {
-            cout << "UNSATISFIABLE" << endl << "Backtracks: "<< btrack << endl << "Decisions: "<< decisions << endl;
+            high_resolution_clock::time_point t2 = high_resolution_clock::now();
+            float time = duration_cast<milliseconds>( t2 - t1 ).count();
+            time /= 1000;
+            cout << "UNSATISFIABLE" << endl << "Time: "<< time << " sec" << endl; 
+            cout << "Decisions: "<< decisions << endl << "Propagations/s: " << propagation/time << endl;
             return 10;
         }
         else if (val == UNDEF) setLiteralToTrue(lit);
@@ -210,7 +216,11 @@ int main(int argc, char *argv[]){
     while (true) {
         while (propagateGivesConflict()) {
             if ( decisionLevel == 0) {
-                cout << "UNSATISFIABLE" << endl << "Backtracks: "<< btrack << endl << "Decisions: "<< decisions << endl;
+                high_resolution_clock::time_point t2 = high_resolution_clock::now();
+                float time = duration_cast<milliseconds>( t2 - t1 ).count();
+                time /= 1000;
+                cout << "UNSATISFIABLE" << endl << "Time: "<< time << " sec" << endl; 
+                cout << "Decisions: "<< decisions << endl << "Propagations/s: " << propagation/time << endl;
                 return 10;
             }
             backtrack();
@@ -218,7 +228,11 @@ int main(int argc, char *argv[]){
         int decisionLit = getNextDecisionLiteral();
         if (decisionLit == 0) {
             checkmodel();
-            cout << "SATISFIABLE" << endl << "Backtracks: "<< btrack << endl << "Decisions: "<< decisions << endl;
+            high_resolution_clock::time_point t2 = high_resolution_clock::now();
+            float time = duration_cast<milliseconds>( t2 - t1 ).count();
+            time /= 1000;
+            cout << "SATISFIABLE" << endl << "Time: "<< time << " sec" << endl;
+            cout << "Decisions: "<< decisions << endl << "Propagations/s: " << propagation/time << endl;
             return 20;
         }
         // start new decision level:
